@@ -7,5 +7,5 @@ test:
 run: eqso
 	./eqso
 
-eqso: eqso.go
-	go build -i
+eqso: eqso.go parser.go lexer.go
+	go build -i -o eqso
