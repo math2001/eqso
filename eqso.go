@@ -11,10 +11,14 @@ const ignores = " "
 const (
 	// Add operator
 	Add = Symbol(iota)
-	// Multiply operator
-	Multiply = Symbol(iota)
-	// Divide operator
-	Divide = Symbol(iota)
+	// Mul is the multiply operator
+	Mul = Symbol(iota)
+	// Div is the divide operator
+	Div = Symbol(iota)
+	// Open bracket
+	Open = Symbol(iota)
+	// Close bracket
+	Close = Symbol(iota)
 )
 
 // Symbol represents a special symbol: add, multiply, divide, and brackets
@@ -23,9 +27,9 @@ type Symbol int
 func (o Symbol) String() string {
 	if o == Add {
 		return "{add}"
-	} else if o == Multiply {
+	} else if o == Mul {
 		return "{mul}"
-	} else if o == Divide {
+	} else if o == Div {
 		return "{div}"
 	}
 	return fmt.Sprintf("{unknown: %d}", o)
@@ -64,29 +68,27 @@ func contains(str rune, all string) bool {
 func ToExpression(s string) (Expression, error) {
 	var expr Expression
 	var magnitude strings.Builder
-	var positive = true
 	s = s + " "
 	for _, c := range s {
 		if contains(c, digits) {
 			magnitude.WriteRune(c)
 		} else {
-			if magnitude.Len() > 0 {
-				// add the add operator between every real number
-				if len(expr) > 0 {
-					if _, ok := expr[len(expr)-1].(Real); ok {
-						expr = append(expr, Add)
-					}
+			// add the add operator between every real number
+			if len(expr) > 0 {
+				if _, ok := expr[len(expr)-1].(Real); ok {
+					expr = append(expr, Add)
 				}
+			}
+			if magnitude.Len() > 0 {
 				m, err := strconv.Atoi(magnitude.String())
 				if err != nil {
 					return nil, err
 				}
-				expr = append(expr, Real{positive, m})
+				expr = append(expr, Real{true, m})
 				magnitude.Reset()
-				positive = true
 			}
 			if c == '-' {
-				positive = !positive
+				expr = append(expr, Add, Real{false, 1}, Mul)
 			}
 		}
 	}
