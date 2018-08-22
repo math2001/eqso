@@ -53,7 +53,30 @@ func TestToExpression(t *testing.T) {
 			expr: makeexpr(1234, Add, -1, Mul, 4321),
 		},
 		"10 - (5 - 3)": r{
-			expr: makeexpr(10, Add, -1, Mul, Open, 5, -1, Mul, 3, Close),
+			expr: makeexpr(10, Add, -1, Mul, Open, 5, Add, -1, Mul, 3, Close),
+		},
+		"10 + (5 - 3)": r{
+			expr: makeexpr(10, Add, Open, 5, Add, -1, Mul, 3, Close),
+		},
+		"10(5 - 3)": r{
+			expr: makeexpr(10, Mul, Open, 5, Add, -1, Mul, 3, Close),
+		},
+		"10(5 - 3)(4 + 3)": r{
+			expr: makeexpr(10, Mul, Open, 5, Add, -1, Mul, 3, Close, Mul,
+				Open, 4, Add, 3, Close),
+		},
+		"10 / 3": r{
+			expr: makeexpr(10, Div, 3),
+		},
+		"10 / (1 + 2)": r{
+			expr: makeexpr(10, Div, Open, 1, Add, 2, Close),
+		},
+		"10 / (1 + 2(4 + 2))": r{
+			expr: makeexpr(10, Div, Open, 1, Add, 2, Mul, Open, 4, Add, 2,
+				Close, Close),
+		},
+		"10 / -3": r{
+			expr: makeexpr(10, Div, -1, Mul, 3),
 		},
 	}
 	for arg, expected := range argresult {

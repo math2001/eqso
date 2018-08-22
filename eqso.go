@@ -25,14 +25,20 @@ const (
 type Symbol int
 
 func (o Symbol) String() string {
-	if o == Add {
+	switch o {
+	case Add:
 		return "{add}"
-	} else if o == Mul {
+	case Mul:
 		return "{mul}"
-	} else if o == Div {
+	case Div:
 		return "{div}"
+	case Open:
+		return "("
+	case Close:
+		return ")"
+	default:
+		return fmt.Sprintf("{unknown: %d}", o)
 	}
-	return fmt.Sprintf("{unknown: %d}", o)
 }
 
 // Real represents any real number
@@ -64,6 +70,19 @@ func contains(str rune, all string) bool {
 	return false
 }
 
+// If the previous element in expr is a Real number (or a closed bracket, but
+// this is technically the same thing), add val
+func previousIsReal(expr Expression, s Symbol) Expression {
+	if len(expr) > 0 {
+		_, r := expr[len(expr)-1].(Real)
+		c := expr[len(expr)-1] == Close
+		if r || c {
+			expr = append(expr, s)
+		}
+	}
+	return expr
+}
+
 // ToExpression a string to a mathematical expression
 func ToExpression(s string) (Expression, error) {
 	var expr Expression
@@ -74,12 +93,8 @@ func ToExpression(s string) (Expression, error) {
 			magnitude.WriteRune(c)
 		} else {
 			// add the add operator between every real number
-			if len(expr) > 0 {
-				if _, ok := expr[len(expr)-1].(Real); ok {
-					expr = append(expr, Add)
-				}
-			}
 			if magnitude.Len() > 0 {
+				expr = previousIsReal(expr, Add)
 				m, err := strconv.Atoi(magnitude.String())
 				if err != nil {
 					return nil, err
@@ -88,7 +103,24 @@ func ToExpression(s string) (Expression, error) {
 				magnitude.Reset()
 			}
 			if c == '-' {
-				expr = append(expr, Add, Real{false, 1}, Mul)
+				expr = previousIsReal(expr, Add)
+				expr = append(expr, Real{false, 1}, Mul)
+			}
+			if c == '+' {
+				expr = append(expr, Add)
+			}
+			if c == '*' {
+				expr = append(expr, Mul)
+			}
+			if c == '/' {
+				expr = append(expr, Div)
+			}
+			if c == '(' {
+				expr = previousIsReal(expr, Mul)
+				expr = append(expr, Open)
+			}
+			if c == ')' {
+				expr = append(expr, Close)
 			}
 		}
 	}
