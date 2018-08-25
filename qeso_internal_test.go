@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"reflect"
 	"testing"
 )
@@ -84,6 +85,35 @@ func TestToExpression(t *testing.T) {
 		if !reflect.DeepEqual(expr, expected.expr) || err != expected.err {
 			t.Errorf("Different result/err for %v:\nshould have (%v, %v)\ngot         (%v, %v)",
 				arg, expected.expr, expected.err, expr, err)
+		}
+	}
+}
+
+func TestParser(t *testing.T) {
+	type r struct {
+		tree *Node
+		err  error
+	}
+	var argresult = map[string]r{
+		"(1+2)": r{
+			tree: &Node{1, 2, Add},
+		},
+		"1+2*3": r{
+			tree: &Node{1, &Node{2, 3, Mul}, Add},
+		},
+		"1+2": r{
+			tree: &Node{1, 2, Add},
+		},
+	}
+	for arg, expected := range argresult {
+		expr, err := ToExpression(arg)
+		if err != nil {
+			log.Fatalf("This shouldn't happen: %s", err)
+		}
+		tree, err := Parse(expr)
+		if !reflect.DeepEqual(tree, expected.tree) || err != expected.err {
+			t.Errorf("Different result/err for %v:\nshould have (%v, %v)\ngot         (%v, %v)",
+				arg, expected.tree, expected.err, tree, err)
 		}
 	}
 }

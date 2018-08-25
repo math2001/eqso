@@ -1,11 +1,96 @@
 package main
 
+import (
+	"fmt"
+)
+
+var errNotFound = fmt.Errorf("function never returned true")
+
 // Node is a number in the expression. 4 is considered to be a number, just as
 // is the whole (1 - 4) for example
 type Node struct {
+	A, B     interface{} // either int or *Node
+	Operator Symbol
+}
+
+func (n Node) String() string {
+	return fmt.Sprintf("Node{%v %s %v}", n.A, n.Operator, n.B)
+}
+
+// AddOperand adds an operand, either A or B. If both are filled, returns an
+// error
+func (n *Node) AddOperand(node interface{}) error {
+	fmt.Printf("add operand %v\n", node)
+	_, ok := node.(int)
+	if !ok {
+		_, ok = node.(*Node)
+		if !ok {
+			return fmt.Errorf("Node should be int or *Node, got %T", node)
+		}
+	}
+	if n.A == nil {
+		n.A = node
+	} else if n.B == nil {
+		n.B = node
+	} else {
+		return fmt.Errorf("Couldn't add operand to node (full)")
+	}
+	return nil
+}
+
+// indexof runs fn on every element of the slice after 'after', and if it
+// returns true, it returns this (index, element)
+func indexof(expr Expression, fn func(int, interface{}) (bool, error), after int) (int, interface{}, error) {
+	for i, e := range expr {
+		ok, err := fn(i, e)
+		if err != nil {
+			return 0, nil, err
+		}
+		if ok {
+			return i, e, nil
+		}
+	}
+	return 0, nil, errNotFound
+}
+
+// It returns an expression containing one Node
+// The reason being that it's recursive (so, it calls itself with expression
+// with multiple Nodes/unparsed tokens)
+func parse(expr Expression) (Expression, error) {
+	fmt.Printf("Parsing: %v\n", expr)
+	var result Expression
+	i, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
+		return e == Open, nil
+	}, 0)
+	if err == errNotFound {
+		// continue parsing
+		return nil, fmt.Errorf("not implemented: go expression without bracket, good job")
+	} else if err != nil {
+		return nil, err
+	}
+	j, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
+		return e == Close, nil
+	}, i)
+	if err != nil {
+		return nil, err
+	}
+	sub, err := parse(expr[i+1 : j])
+	if err != nil {
+		return nil, err
+	}
+	result = append(append(result[i+1:], sub), result[:j])
+	return result, nil
 }
 
 // Parse transforms an expression into a tree of nodes
-func Parse(expr Expression) *Node {
-	return nil
+func Parse(expr Expression) (*Node, error) {
+	expr, err := parse(expr)
+	if err != nil {
+		return nil, err
+	}
+	node, ok := expr[0].(*Node)
+	if !ok {
+		return nil, fmt.Errorf("invalid expression: should have one *Node, got %T", expr[0])
+	}
+	return node, nil
 }
