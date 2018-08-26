@@ -53,18 +53,34 @@ func indexof(expr Expression, fn func(int, interface{}) (bool, error), after int
 	return 0, nil, errNotFound
 }
 
+// // A sub parse of the parse function
+// func parsebrackets(expr Expression) (Expression, error) {
+
+// }
+
 // It returns an expression containing one Node
 // The reason being that it's recursive (so, it calls itself with expression
 // with multiple Nodes/unparsed tokens)
 func parse(expr Expression) (Expression, error) {
 	fmt.Printf("Parsing: %v\n", expr)
-	var result Expression
+	// look for brackets
 	i, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
 		return e == Open, nil
 	}, 0)
 	if err == errNotFound {
-		// continue parsing
-		return nil, fmt.Errorf("not implemented: go expression without bracket, good job")
+		// look for * or /
+		i, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
+			return e == Mul || e == Div, nil
+		}, 0)
+		if err == errNotFound {
+			return nil, fmt.Errorf("not implemented: expression without mul/div: %v", expr)
+		} else if err != nil {
+			return nil, err
+		}
+		// the operands and then the operator
+		expr = append(append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}), expr[i+2:]...)
+		fmt.Printf("Return %v\n", expr)
+		return parse(expr)
 	} else if err != nil {
 		return nil, err
 	}
@@ -78,8 +94,8 @@ func parse(expr Expression) (Expression, error) {
 	if err != nil {
 		return nil, err
 	}
-	result = append(append(result[i+1:], sub), result[:j])
-	return result, nil
+	expr = append(append(expr[i+1:], sub), expr[:j])
+	return expr, nil
 }
 
 // Parse transforms an expression into a tree of nodes
