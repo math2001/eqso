@@ -49,6 +49,14 @@ type Real struct {
 	Magnitude int
 }
 
+// Int returns the int value of this Real
+func (r *Real) Int() int {
+	if r.Positive {
+		return r.Magnitude
+	}
+	return r.Magnitude * -1
+}
+
 // R returns a Real from an integer
 func R(i int) Real {
 	r := Real{}
@@ -69,6 +77,52 @@ func (r Real) String() string {
 		p = "-"
 	}
 	return fmt.Sprintf("%s%d", p, r.Magnitude)
+}
+
+// Node is a number in the expression. 4 is considered to be a number, just as
+// is the whole (1 - 4) for example
+type Node struct {
+	A, B     interface{} // either int or *Node
+	Operator Symbol
+}
+
+func (n Node) String() string {
+	return fmt.Sprintf("Node{%v %s %v}", n.A, n.Operator, n.B)
+}
+
+// Eval evaluates the node's value
+func (n *Node) Eval() (int, error) {
+	var a, b int
+	var err error
+	if node, isnode := n.A.(*Node); isnode {
+		a, err = node.Eval()
+		if err != nil {
+			return 0, err
+		}
+	} else {
+		r := n.A.(Real)
+		a = r.Int()
+	}
+	if node, isnode := n.B.(*Node); isnode {
+		b, err = node.Eval()
+		if err != nil {
+			return 0, err
+		}
+	} else {
+		r := n.B.(Real)
+		b = r.Int()
+	}
+
+	if n.Operator == Add {
+		return a + b, nil
+	} else if n.Operator == Mul {
+		return a * b, nil
+	} else if n.Operator == Div {
+		return a / b, nil
+	} else if n.Operator == Null {
+		return a, nil
+	}
+	return 0, fmt.Errorf("Invalid operator %v", n.Operator)
 }
 
 // Expression represents a mathematical expression. There are only 2 types of

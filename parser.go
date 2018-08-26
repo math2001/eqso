@@ -6,38 +6,6 @@ import (
 
 var errNotFound = fmt.Errorf("function never returned true")
 
-// Node is a number in the expression. 4 is considered to be a number, just as
-// is the whole (1 - 4) for example
-type Node struct {
-	A, B     interface{} // either int or *Node
-	Operator Symbol
-}
-
-func (n Node) String() string {
-	return fmt.Sprintf("Node{%v %s %v}", n.A, n.Operator, n.B)
-}
-
-// AddOperand adds an operand, either A or B. If both are filled, returns an
-// error
-func (n *Node) AddOperand(node interface{}) error {
-	fmt.Printf("add operand %v\n", node)
-	_, ok := node.(int)
-	if !ok {
-		_, ok = node.(*Node)
-		if !ok {
-			return fmt.Errorf("Node should be int or *Node, got %T", node)
-		}
-	}
-	if n.A == nil {
-		n.A = node
-	} else if n.B == nil {
-		n.B = node
-	} else {
-		return fmt.Errorf("Couldn't add operand to node (full)")
-	}
-	return nil
-}
-
 // indexof runs fn on every element of the slice after 'after', and if it
 // returns true, it returns this (index, element)
 func indexof(expr Expression, fn func(int, interface{}) (bool, error), after int) (int, interface{}, error) {

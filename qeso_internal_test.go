@@ -6,6 +6,15 @@ import (
 	"testing"
 )
 
+// factorial returns n! It doesn't support negative numbers (which would raise
+// a Math Error)
+func factorial(n int) int {
+	if n <= 1 {
+		return 1
+	}
+	return n * factorial(n-1)
+}
+
 func makeexpr(values ...interface{}) Expression {
 	var expr Expression
 	for _, val := range values {
@@ -144,6 +153,35 @@ func TestParser(t *testing.T) {
 		if !reflect.DeepEqual(tree, expected.tree) || err != expected.err {
 			t.Errorf("Different result/err for %v:\nshould have (%v, %v)\ngot         (%v, %v)",
 				arg, expected.tree, expected.err, tree, err)
+		}
+	}
+}
+func TestEval(t *testing.T) {
+	type r struct {
+		res int
+		err error
+	}
+	var argresult = map[string]r{
+		"1+2": r{
+			res: 3,
+		},
+		"1+2+3+4+5+6+7+8+9+10": r{55, nil},
+		"1*2*3*4*5*6*7*8*9*10": r{factorial(10), nil},
+		"12*43+32*-35":         r{12*43 + 32*-35, nil},
+	}
+	for arg, expected := range argresult {
+		expr, err := ToExpression(arg)
+		if err != nil {
+			log.Fatalf("This shouldn't happen: %s", err)
+		}
+		tree, err := Parse(expr)
+		if err != nil {
+			log.Fatalf("This shouldn't happen either: %s", err)
+		}
+		res, err := tree.Eval()
+		if res != expected.res || err != expected.err {
+			t.Errorf("Different result/err for %v:\nshould have (%v, %v)\ngot         (%v, %v)",
+				arg, expected.res, expected.err, res, err)
 		}
 	}
 }
