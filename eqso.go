@@ -4,6 +4,8 @@ import "fmt"
 
 const (
 	digits = "1234567890"
+	// Null is no operator
+	Null = Symbol(iota)
 	// Add operator
 	Add = Symbol(iota)
 	// Mul is the multiply operator
@@ -21,6 +23,8 @@ type Symbol int
 
 func (o Symbol) String() string {
 	switch o {
+	case Null:
+		return "{null}"
 	case Add:
 		return "{add}"
 	case Mul:

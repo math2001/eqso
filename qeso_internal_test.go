@@ -95,14 +95,17 @@ func TestParser(t *testing.T) {
 		err  error
 	}
 	var argresult = map[string]r{
-		"(1+2)": r{
-			tree: &Node{1, 2, Add},
-		},
 		"1+2*3": r{
-			tree: &Node{1, &Node{2, 3, Mul}, Add},
+			tree: &Node{Real{true, 1}, &Node{Real{true, 2}, Real{true, 3}, Mul}, Add},
+		},
+		"(1+2)*3": r{
+			tree: &Node{&Node{Real{true, 1}, Real{true, 2}, Add}, Real{true, 3}, Mul},
 		},
 		"1+2": r{
-			tree: &Node{1, 2, Add},
+			tree: &Node{Real{true, 1}, Real{true, 2}, Add},
+		},
+		"1": r{
+			tree: &Node{Real{true, 1}, nil, Null},
 		},
 	}
 	for arg, expected := range argresult {

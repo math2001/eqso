@@ -73,7 +73,29 @@ func parse(expr Expression) (Expression, error) {
 			return e == Mul || e == Div, nil
 		}, 0)
 		if err == errNotFound {
-			return nil, fmt.Errorf("not implemented: expression without mul/div: %v", expr)
+			// look for +
+			i, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
+				return e == Add, nil
+			}, 0)
+			if err == errNotFound {
+				if len(expr) != 1 {
+					return nil, fmt.Errorf("invalid expression after parsing %v", expr)
+				}
+				fmt.Printf("Switching on %T", expr[0])
+				switch expr[0].(type) {
+				case Real:
+					return Expression{&Node{expr[0], nil, Null}}, nil
+				case *Node:
+					return expr, nil
+				}
+				return nil, fmt.Errorf("Got 'empty' expression of %d elements: %v", len(expr), expr)
+				// return Expression{&Node{expr[0], nil, 0}}, nil
+			} else if err != nil {
+				return nil, err
+			}
+			expr = append(append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}), expr[i+2:]...)
+			fmt.Printf("Return %v\n", expr)
+			return parse(expr)
 		} else if err != nil {
 			return nil, err
 		}
@@ -95,7 +117,7 @@ func parse(expr Expression) (Expression, error) {
 		return nil, err
 	}
 	expr = append(append(expr[i+1:], sub), expr[:j])
-	return expr, nil
+	return parse(expr)
 }
 
 // Parse transforms an expression into a tree of nodes
@@ -106,7 +128,7 @@ func Parse(expr Expression) (*Node, error) {
 	}
 	node, ok := expr[0].(*Node)
 	if !ok {
-		return nil, fmt.Errorf("invalid expression: should have one *Node, got %T", expr[0])
+		return nil, fmt.Errorf("invalid expression result: should have one *Node, got %T", expr[0])
 	}
 	return node, nil
 }
