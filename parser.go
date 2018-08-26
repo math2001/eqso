@@ -30,6 +30,7 @@ func indexof(expr Expression, fn func(int, interface{}) (bool, error), after int
 // The reason being that it's recursive (so, it calls itself with expression
 // with multiple Nodes/unparsed tokens)
 func parse(expr Expression) (Expression, error) {
+	fmt.Printf("Parsing: '%v'\n", expr)
 	// look for brackets
 	i, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
 		return e == Open, nil
@@ -69,13 +70,16 @@ func parse(expr Expression) (Expression, error) {
 		expr = append(append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}), expr[i+2:]...)
 		return parse(expr)
 	} else if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error finding opening bracket: %s", err)
 	}
 	j, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
 		return e == Close, nil
 	}, i)
+	if err == errNotFound {
+		return nil, fmt.Errorf("Unmatched bracket: missing closing bracket in '%v'", expr[i:])
+	}
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error finding closing bracket: %s", err)
 	}
 	sub, err := parse(expr[i+1 : j])
 	if err != nil {

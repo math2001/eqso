@@ -113,6 +113,9 @@ func TestParser(t *testing.T) {
 		"(1+2)+3": r{
 			tree: &Node{&Node{Real{true, 1}, Real{true, 2}, Add}, Real{true, 3}, Add},
 		},
+		"(10*(1+3))+1": r{
+			tree: &Node{&Node{10, &Node{1, 3, Add}, Mul}, 1, Add},
+		},
 		"1+2": r{
 			tree: &Node{Real{true, 1}, Real{true, 2}, Add},
 		},
@@ -165,9 +168,11 @@ func TestEval(t *testing.T) {
 		"1+2": r{
 			res: 3,
 		},
-		"1+2+3+4+5+6+7+8+9+10": r{55, nil},
-		"1*2*3*4*5*6*7*8*9*10": r{factorial(10), nil},
-		"12*43+32*-35":         r{12*43 + 32*-35, nil},
+		"1+2+3+4+5+6+7+8+9+10":    r{55, nil},
+		"1*2*3*4*5*6*7*8*9*10":    r{factorial(10), nil},
+		"12*43+32*-35":            r{12*43 + 32*-35, nil},
+		"(10+8)*28/6":             r{(10 + 8) * 28 / 6, nil},
+		"(10*(22+4)-10/(4/2))+11": r{(10*(22+4) - 10/(4/2)) + 11, nil},
 	}
 	for arg, expected := range argresult {
 		expr, err := ToExpression(arg)
