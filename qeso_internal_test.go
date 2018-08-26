@@ -110,6 +110,30 @@ func TestParser(t *testing.T) {
 		"1": r{
 			tree: &Node{Real{true, 1}, nil, Null},
 		},
+		"10+59*32/4": r{
+			tree: &Node{R(10), &Node{&Node{R(59), R(32), Mul}, R(4), Div}, Add},
+		},
+		"(10)": r{
+			tree: &Node{R(10), nil, Null},
+		},
+		"20(10 + 2)": r{
+			tree: &Node{R(20), &Node{R(10), R(2), Add}, Mul},
+		},
+		"-20(10 + 2)*-3": r{
+			tree: &Node{
+				&Node{
+					&Node{
+						&Node{R(-1), R(20), Mul},
+						&Node{R(10), R(2), Add},
+						Mul,
+					},
+					R(-1),
+					Mul,
+				},
+				R(3),
+				Mul,
+			},
+		},
 	}
 	for arg, expected := range argresult {
 		expr, err := ToExpression(arg)

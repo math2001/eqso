@@ -49,6 +49,18 @@ type Real struct {
 	Magnitude int
 }
 
+// R returns a Real from an integer
+func R(i int) Real {
+	r := Real{}
+	r.Positive = i >= 0
+	if r.Positive {
+		r.Magnitude = i
+	} else {
+		r.Magnitude = i * -1
+	}
+	return r
+}
+
 func (r Real) String() string {
 	var p string
 	if r.Positive {
