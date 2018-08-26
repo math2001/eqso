@@ -62,7 +62,6 @@ func indexof(expr Expression, fn func(int, interface{}) (bool, error), after int
 // The reason being that it's recursive (so, it calls itself with expression
 // with multiple Nodes/unparsed tokens)
 func parse(expr Expression) (Expression, error) {
-	fmt.Printf("Parsing: %v\n", expr)
 	// look for brackets
 	i, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
 		return e == Open, nil
@@ -81,7 +80,6 @@ func parse(expr Expression) (Expression, error) {
 				if len(expr) != 1 {
 					return nil, fmt.Errorf("invalid expression after parsing %v", expr)
 				}
-				fmt.Printf("Switching on %T", expr[0])
 				switch expr[0].(type) {
 				case Real:
 					return Expression{&Node{expr[0], nil, Null}}, nil
@@ -89,19 +87,18 @@ func parse(expr Expression) (Expression, error) {
 					return expr, nil
 				}
 				return nil, fmt.Errorf("Got 'empty' expression of %d elements: %v", len(expr), expr)
-				// return Expression{&Node{expr[0], nil, 0}}, nil
 			} else if err != nil {
 				return nil, err
 			}
-			expr = append(append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}), expr[i+2:]...)
-			fmt.Printf("Return %v\n", expr)
+			expr = append(
+				append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}),
+				expr[i+2:]...)
 			return parse(expr)
 		} else if err != nil {
 			return nil, err
 		}
 		// the operands and then the operator
 		expr = append(append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}), expr[i+2:]...)
-		fmt.Printf("Return %v\n", expr)
 		return parse(expr)
 	} else if err != nil {
 		return nil, err
@@ -116,7 +113,9 @@ func parse(expr Expression) (Expression, error) {
 	if err != nil {
 		return nil, err
 	}
-	expr = append(append(expr[i+1:], sub), expr[:j])
+	// replace every element in the brackets with sub
+	// expr = append(append(expr[:i+1], sub), expr[j:]...)
+	expr = append(expr[:i], append(sub, expr[j+1:]...)...)
 	return parse(expr)
 }
 

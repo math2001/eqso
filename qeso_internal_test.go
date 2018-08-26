@@ -101,6 +101,9 @@ func TestParser(t *testing.T) {
 		"(1+2)*3": r{
 			tree: &Node{&Node{Real{true, 1}, Real{true, 2}, Add}, Real{true, 3}, Mul},
 		},
+		"(1+2)+3": r{
+			tree: &Node{&Node{Real{true, 1}, Real{true, 2}, Add}, Real{true, 3}, Add},
+		},
 		"1+2": r{
 			tree: &Node{Real{true, 1}, Real{true, 2}, Add},
 		},

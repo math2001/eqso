@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"log"
+)
 
 const (
 	digits = "1234567890"
@@ -70,5 +73,14 @@ func contains(str rune, all string) bool {
 }
 
 func main() {
-	fmt.Println("You can run the tests if you want:\n  $ make test")
+	// expr, err := ToExpression("(1+2)*3")
+	expr, err := ToExpression("(1+2*3)*4")
+	if err != nil {
+		log.Fatal(err)
+	}
+	tree, err := Parse(expr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Got tree:", tree)
 }
