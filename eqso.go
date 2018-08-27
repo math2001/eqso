@@ -16,6 +16,8 @@ const (
 	Mul = Symbol(iota)
 	// Div is the divide operator
 	Div = Symbol(iota)
+	// Exp is the exponential operator
+	Exp = Symbol(iota)
 	// Open bracket
 	Open = Symbol(iota)
 	// Close bracket
@@ -35,6 +37,8 @@ func (o Symbol) String() string {
 		return "{mul}"
 	case Div:
 		return "{div}"
+	case Exp:
+		return "{exp}"
 	case Open:
 		return "("
 	case Close:

@@ -70,6 +70,21 @@ func TestTokenizer(t *testing.T) {
 		"10) (10 + 1)": r{
 			err: errUnmatchedClosing,
 		},
+		"10 ^ 2": r{
+			expr: Expression{10, Exp, 2},
+		},
+		"10 ^ -2": r{
+			expr: Expression{10, Exp, -2},
+		},
+		"10 ^ 2 ^ 5": r{
+			expr: Expression{10, Exp, 2, Exp, 5},
+		},
+		"10 ^ (2 + 4)": r{
+			expr: Expression{10, Exp, Open, 2, Add, 4, Close},
+		},
+		"(1 + 2) ^ (2 + 4)": r{
+			expr: Expression{Open, 1, Add, 2, Close, Exp, Open, 2, Add, 4, Close},
+		},
 	}
 	for arg, expected := range argresult {
 		expr, err := Tokenize(strings.NewReader(arg))
