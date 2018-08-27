@@ -73,6 +73,9 @@ func Tokenize(reader io.Reader) (Expression, error) {
 			magnitude.Reset()
 			positive = true
 		}
+		if ru == '^' {
+			expr = append(expr, Exp)
+		}
 		if ru == '-' {
 			expr = addIfLastIsTerm(expr, Add)
 			positive = false
