@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+var (
+	errMissingClosing   = fmt.Errorf("missing closing bracket")
+	errUnmatchedClosing = fmt.Errorf("extra closing bracket found")
+)
+
 func addIfLastIsTerm(expr Expression, s Symbol) Expression {
 	if len(expr) == 0 {
 		return expr
@@ -31,6 +36,7 @@ func Tokenize(reader io.Reader) (Expression, error) {
 		positive  = true
 		r         = bufio.NewReader(reader)
 		stop      = false
+		brackets  = 0 // brackets counter, to make sure that they are valid
 	)
 	for {
 		if stop {
@@ -83,9 +89,14 @@ func Tokenize(reader io.Reader) (Expression, error) {
 			expr = addIfLastIsTerm(expr, Mul)
 			expr = append(expr, Open)
 			positive = true // reset to default
+			brackets++
 		}
 		if ru == ')' {
 			expr = append(expr, Close)
+			brackets--
+			if brackets < 0 {
+				return nil, errUnmatchedClosing
+			}
 		}
 		if ru == '/' {
 			expr = append(expr, Div)
@@ -93,6 +104,9 @@ func Tokenize(reader io.Reader) (Expression, error) {
 		if ru == '*' {
 			expr = append(expr, Mul)
 		}
+	}
+	if brackets > 0 {
+		return nil, errMissingClosing
 	}
 	return expr, nil
 }

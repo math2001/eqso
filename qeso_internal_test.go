@@ -61,6 +61,15 @@ func TestToExpression(t *testing.T) {
 		"10 / -3": r{
 			expr: Expression{10, Div, -3},
 		},
+		"10 (10 + 1": r{
+			err: errMissingClosing,
+		},
+		"10 (10 + 1))": r{
+			err: errUnmatchedClosing,
+		},
+		"10) (10 + 1)": r{
+			err: errUnmatchedClosing,
+		},
 	}
 	for arg, expected := range argresult {
 		expr, err := Tokenize(strings.NewReader(arg))
