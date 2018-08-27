@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"math"
 	"strings"
 )
 
@@ -90,8 +91,10 @@ func (n *Node) Eval() (int, error) {
 		return a / b, nil
 	} else if n.Operator == Null {
 		return a, nil
+	} else if n.Operator == Exp {
+		return int(math.Pow(float64(a), float64(b))), nil
 	}
-	return 0, fmt.Errorf("Invalid operator %v", n.Operator)
+	return 0, fmt.Errorf("eval: invalid operator %v", n.Operator)
 }
 
 // Expression represents a mathematical expression. There are only 2 types of

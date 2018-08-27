@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"math"
 	"reflect"
 	"strings"
 	"testing"
@@ -177,6 +178,7 @@ func TestEval(t *testing.T) {
 		"12*43+32*-35":            r{12*43 + 32*-35, nil},
 		"(10+8)*28/6":             r{(10 + 8) * 28 / 6, nil},
 		"(10*(22+4)-10/(4/2))+11": r{(10*(22+4) - 10/(4/2)) + 11, nil},
+		"(20+4)^(4 / 2 + 3)":      r{int(math.Pow((20 + 4), (4/2 + 3))), nil},
 	}
 	for arg, expected := range argresult {
 		expr, err := Tokenize(strings.NewReader(arg))
