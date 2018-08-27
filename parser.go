@@ -6,83 +6,103 @@ import (
 
 var errNotFound = fmt.Errorf("function never returned true")
 
-// indexof runs fn on every element of the slice after 'after', and if it
-// returns true, it returns this (index, element)
-func indexof(expr Expression, fn func(int, interface{}) (bool, error), after int) (int, interface{}, error) {
-	for i, e := range expr {
-		ok, err := fn(i, e)
-		if err != nil {
-			return 0, nil, err
-		}
-		if ok {
-			return i, e, nil
+func parseAdd(expr Expression) (Expression, error) {
+	fmt.Printf("Parsing Add %v\n", expr)
+	var (
+		i     int
+		found bool
+		e     interface{}
+	)
+	for i, e = range expr {
+		if e == Add {
+			found = true
+			break
 		}
 	}
-	return 0, nil, errNotFound
+	if !found {
+		switch expr[0].(type) {
+		case int:
+			return Expression{&Node{expr[0], nil, Null}}, nil
+		case *Node:
+			return expr, nil
+		}
+		return nil, fmt.Errorf("invalid type for first element: %T", expr[0])
+	}
+	expr = append(
+		append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}),
+		expr[i+2:]...)
+	fmt.Printf("Returning %v\n", expr)
+	// same things as parseMulDiv
+	return parseAdd(expr)
 }
 
-// // A sub parse of the parse function
-// func parsebrackets(expr Expression) (Expression, error) {
-
-// }
+func parseMulDiv(expr Expression) (Expression, error) {
+	fmt.Printf("Parsing MulDiv %v\n", expr)
+	var (
+		i     int
+		found bool
+		e     interface{}
+	)
+	for i, e = range expr {
+		if e == Mul || e == Div {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return parseAdd(expr)
+	}
+	// we add the first operand, the second operand, and the symbol
+	expr = append(
+		append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}),
+		expr[i+2:]...)
+	// since we got here, this means that the tasks higher up are done
+	// (brackets), so they don't need to run again
+	return parseMulDiv(expr)
+}
 
 // It returns an expression containing one Node
 // The reason being that it's recursive (so, it calls itself with expression
 // with multiple Nodes/unparsed tokens)
 func parse(expr Expression) (Expression, error) {
+	fmt.Printf("Parsing %v\n", expr)
 	// look for brackets
-	i, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
-		return e == Open, nil
-	}, 0)
-	if err == errNotFound {
-		// look for * or /
-		i, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
-			return e == Mul || e == Div, nil
-		}, 0)
-		if err == errNotFound {
-			// look for +
-			i, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
-				return e == Add, nil
-			}, 0)
-			if err == errNotFound {
-				if len(expr) != 1 {
-					return nil, fmt.Errorf("invalid expression after parsing %v", expr)
-				}
-				switch expr[0].(type) {
-				case int:
-					return Expression{&Node{expr[0], nil, Null}}, nil
-				case *Node:
-					return expr, nil
-				}
-				return nil, fmt.Errorf("Got 'empty' expression of %d elements: %v", len(expr), expr)
-			} else if err != nil {
-				return nil, err
-			}
-			expr = append(
-				append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}),
-				expr[i+2:]...)
-			return parse(expr)
-		} else if err != nil {
-			return nil, err
+	var i, j int
+	var e interface{}
+	var found = false
+	for i, e = range expr {
+		if e == Open {
+			found = true
+			break
 		}
-		// the operands and then the operator
-		expr = append(append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}), expr[i+2:]...)
-		return parse(expr)
-	} else if err != nil {
-		return nil, fmt.Errorf("error finding opening bracket: %s", err)
 	}
-	j, _, err := indexof(expr, func(i int, e interface{}) (bool, error) {
-		return e == Close, nil
-	}, i)
-	if err == errNotFound {
-		return nil, fmt.Errorf("Unmatched bracket: missing closing bracket in '%v'", expr[i:])
+	if !found { // we don't have any brackets
+		return parseMulDiv(expr)
 	}
-	if err != nil {
-		return nil, fmt.Errorf("error finding closing bracket: %s", err)
+	var opencount = 0
+	found = false
+	for j, e = range expr[i:] {
+		if e == Open {
+			opencount++
+		}
+		if e == Close {
+			opencount--
+			if opencount == 0 {
+				found = true
+				break
+			}
+		}
 	}
+	j += i
+	if !found {
+		// note that this shouldn't happen as the bracket count is checked in
+		// the tokenizer
+		return nil, fmt.Errorf("no matching bracket in %s", expr[i:])
+	}
+	fmt.Println("end", expr, j, expr[i+1:j])
 	sub, err := parse(expr[i+1 : j])
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("sub parsing %v: %s", expr[i+1:j], err)
 	}
 	// replace every element in the brackets with sub
 	// expr = append(append(expr[:i+1], sub), expr[j:]...)
