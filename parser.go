@@ -58,6 +58,27 @@ func parseMulDiv(expr Expression) (Expression, error) {
 	return parseMulDiv(expr)
 }
 
+func parseExponentials(expr Expression) (Expression, error) {
+	var (
+		i     int
+		e     interface{}
+		found bool
+	)
+	for i, e = range expr {
+		if e == Exp {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return parseMulDiv(expr)
+	}
+	expr = append(
+		append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}),
+		expr[i+2:]...)
+	return parseExponentials(expr)
+}
+
 // It returns an expression containing one Node
 // The reason being that it's recursive (so, it calls itself with expression
 // with multiple Nodes/unparsed tokens)
@@ -73,7 +94,7 @@ func parse(expr Expression) (Expression, error) {
 		}
 	}
 	if !found { // we don't have any brackets
-		return parseMulDiv(expr)
+		return parseExponentials(expr)
 	}
 	var opencount = 0
 	found = false
@@ -91,6 +112,7 @@ func parse(expr Expression) (Expression, error) {
 	}
 	j += i
 	if !found {
+		// this means that we have found an opening bracket, but no closing
 		// note that this shouldn't happen as the bracket count is checked in
 		// the tokenizer
 		return nil, fmt.Errorf("no matching bracket in %s", expr[i:])

@@ -76,6 +76,9 @@ func TestTokenizer(t *testing.T) {
 		"10 ^ -2": r{
 			expr: Expression{10, Exp, -2},
 		},
+		"10 ^ -2 * 5": r{
+			expr: Expression{10, Exp, -2, Mul, 5},
+		},
 		"10 ^ 2 ^ 5": r{
 			expr: Expression{10, Exp, 2, Exp, 5},
 		},
@@ -130,6 +133,21 @@ func TestParser(t *testing.T) {
 		},
 		"-20(10 + 2)*-3": r{
 			tree: &Node{&Node{-20, &Node{10, 2, Add}, Mul}, -3, Mul},
+		},
+		"10 ^ 2": r{
+			tree: &Node{10, 2, Exp},
+		},
+		"10 ^ (5 + 3)": r{
+			tree: &Node{10, &Node{5, 3, Add}, Exp},
+		},
+		"10 ^ (5 + 3) + 9": r{
+			tree: &Node{&Node{10, &Node{5, 3, Add}, Exp}, 9, Add},
+		},
+		"20 ^ 3 + 27": r{
+			tree: &Node{&Node{20, 3, Exp}, 27, Add},
+		},
+		"20 ^ 3 * 27 ^ 8 + 50": r{
+			tree: &Node{&Node{&Node{20, 3, Exp}, &Node{27, 8, Exp}, Mul}, 50, Add},
 		},
 	}
 	for arg, expected := range argresult {
