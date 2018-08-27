@@ -7,7 +7,6 @@ import (
 var errNotFound = fmt.Errorf("function never returned true")
 
 func parseAdd(expr Expression) (Expression, error) {
-	fmt.Printf("Parsing Add %v\n", expr)
 	var (
 		i     int
 		found bool
@@ -31,13 +30,11 @@ func parseAdd(expr Expression) (Expression, error) {
 	expr = append(
 		append(expr[:i-1], &Node{expr[i-1], expr[i+1], expr[i].(Symbol)}),
 		expr[i+2:]...)
-	fmt.Printf("Returning %v\n", expr)
 	// same things as parseMulDiv
 	return parseAdd(expr)
 }
 
 func parseMulDiv(expr Expression) (Expression, error) {
-	fmt.Printf("Parsing MulDiv %v\n", expr)
 	var (
 		i     int
 		found bool
@@ -65,7 +62,6 @@ func parseMulDiv(expr Expression) (Expression, error) {
 // The reason being that it's recursive (so, it calls itself with expression
 // with multiple Nodes/unparsed tokens)
 func parse(expr Expression) (Expression, error) {
-	fmt.Printf("Parsing %v\n", expr)
 	// look for brackets
 	var i, j int
 	var e interface{}
@@ -99,7 +95,6 @@ func parse(expr Expression) (Expression, error) {
 		// the tokenizer
 		return nil, fmt.Errorf("no matching bracket in %s", expr[i:])
 	}
-	fmt.Println("end", expr, j, expr[i+1:j])
 	sub, err := parse(expr[i+1 : j])
 	if err != nil {
 		return nil, fmt.Errorf("sub parsing %v: %s", expr[i+1:j], err)

@@ -2,7 +2,7 @@
 .SILENT: run test eqso
 
 test:
-	go test -run TestParser
+	go test
 
 run: eqso
 	./eqso
