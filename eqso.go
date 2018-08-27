@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 )
 
 const (
@@ -43,42 +44,6 @@ func (o Symbol) String() string {
 	}
 }
 
-// Real represents any real number
-type Real struct {
-	Positive  bool
-	Magnitude int
-}
-
-// Int returns the int value of this Real
-func (r *Real) Int() int {
-	if r.Positive {
-		return r.Magnitude
-	}
-	return r.Magnitude * -1
-}
-
-// R returns a Real from an integer
-func R(i int) Real {
-	r := Real{}
-	r.Positive = i >= 0
-	if r.Positive {
-		r.Magnitude = i
-	} else {
-		r.Magnitude = i * -1
-	}
-	return r
-}
-
-func (r Real) String() string {
-	var p string
-	if r.Positive {
-		p = "+"
-	} else {
-		p = "-"
-	}
-	return fmt.Sprintf("%s%d", p, r.Magnitude)
-}
-
 // Node is a number in the expression. 4 is considered to be a number, just as
 // is the whole (1 - 4) for example
 type Node struct {
@@ -100,8 +65,8 @@ func (n *Node) Eval() (int, error) {
 			return 0, err
 		}
 	} else {
-		r := n.A.(Real)
-		a = r.Int()
+		r := n.A.(int)
+		a = r
 	}
 	if node, isnode := n.B.(*Node); isnode {
 		b, err = node.Eval()
@@ -109,8 +74,8 @@ func (n *Node) Eval() (int, error) {
 			return 0, err
 		}
 	} else {
-		r := n.B.(Real)
-		b = r.Int()
+		r := n.B.(int)
+		b = r
 	}
 
 	if n.Operator == Add {
@@ -140,7 +105,7 @@ func contains(str rune, all string) bool {
 
 func main() {
 	// expr, err := ToExpression("(1+2)*3")
-	expr, err := ToExpression("(1+2*3)*4")
+	expr, err := Tokenize(strings.NewReader("(1+2*3)*4"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -148,5 +113,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println("Got tree:", tree)
+	res, err := tree.Eval()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Result:", res)
 }
